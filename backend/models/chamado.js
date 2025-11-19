@@ -1,15 +1,18 @@
-import { create, readAll, read, update, deleteRecord } from '../config/database.js';
+import { create, readAll, read, deleteRecord } from '../config/database.js';
 
-const listarChamados = async (where = null) => {
+export const listarChamados = async (where = null) => {
   try {
-    return await readAll('chamados', where);
+    if (where !== null){
+      return await readAll('chamados', where)
+    }
+    return await readAll('chamados');
   } catch (error) {
     console.error('Erro ao listar chamados:', error);
     throw error;
   }
 };
 
-const obterChamadoPorId = async (id) => {
+export const obterChamadoPorId = async (id) => {
   try {
     return await read('chamados', `id_chamado = ${id}`);
   } catch (error) {
@@ -18,7 +21,7 @@ const obterChamadoPorId = async (id) => {
   }
 };
 
-const criarChamado = async (chamadoData) => {
+export const criarChamado = async (chamadoData) => {
   try {
     return await create('chamados', chamadoData);
   } catch (error) {
@@ -27,16 +30,7 @@ const criarChamado = async (chamadoData) => {
   }
 };     
 
-const atualizarChamado = async (id, chamadoData) => {
-  try {
-    await update('chamados', chamadoData, `id_chamado = ${id}`);
-  } catch (error) {
-    console.error('Erro ao atualizar chamado:', error);
-    throw error;
-  }
-};
-
-const excluirChamado = async (id) => {
+export const excluirChamado = async (id) => {
   try {
     await deleteRecord('chamados', `id_chamado = ${id}`);
   } catch (error) {
@@ -44,5 +38,3 @@ const excluirChamado = async (id) => {
     throw error;
   }
 };
-
-export { listarChamados, obterChamadoPorId, criarChamado, atualizarChamado, excluirChamado };

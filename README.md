@@ -1,10 +1,25 @@
-# Zelus Assistência Técnica
+# Zelus Assistência Técnica 🔧
 
-Sistema de gerenciamento de chamados técnicos desenvolvido com Next.js (frontend) e Node.js/Express (backend).
+Website interativo e responsivo desenvolvido com foco em **experiência do usuário (UX)**.  
+Apresenta soluções de hardware e software organizadas por categorias.
+
+## Funcionalidades
+- Seções interativas com erros comuns e soluções rápidas
+- Layout responsivo e otimizado para navegação móvel
+- Conteúdo categorizado por área técnica (Windows, Linux, Hardware)
+
+## Tecnologias
+- React
+- Next.js
+- Tailwind CSS
+
+## Objetivo
+Demonstrar design centrado no usuário e uso de componentes reutilizáveis.
+
 
 ## 🚀 Como Executar
-
 ### Pré-requisitos
+
 - Node.js (versão 18 ou superior)
 - MySQL (versão 8.0 ou superior)
 - npm ou yarn
@@ -74,14 +89,7 @@ O frontend estará rodando em `http://localhost:3000`
 
 - **Aluno**: Pode criar e visualizar seus próprios chamados
 - **Técnico**: Acesso completo aos chamados e funcionalidades técnicas
-- **Gerente**: Acesso administrativo ao sistema
-
-## 🛠️ Tecnologias Utilizadas
-
-- **Backend**: Node.js, Express, MySQL, JWT
-- **Frontend**: Next.js 15, React 19, Tailwind CSS
-- **Autenticação**: JWT (JSON Web Tokens)
-- **Banco de Dados**: MySQL com pool de conexões
+- **Administrador**: Acesso administrativo ao sistema
 
 ## 📝 Notas Importantes
 
@@ -94,16 +102,19 @@ O frontend estará rodando em `http://localhost:3000`
 ## 🔧 Solução de Problemas
 
 ### Backend não conecta ao banco
+
 - Verifique se o MySQL está rodando
 - Confirme as credenciais no arquivo `.env`
 - Execute o script SQL para criar o banco e tabelas
 
 ### Frontend não carrega dados
+
 - Verifique se o backend está rodando na porta 3001
 - Confirme se o CORS está configurado corretamente
 - Verifique o console do navegador para erros
 
 ### Erro de autenticação
+
 - Verifique se o token JWT está sendo enviado corretamente
 - Confirme se a chave JWT_SECRET está configurada
 - Verifique se o usuário existe no banco de dados

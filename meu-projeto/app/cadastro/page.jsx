@@ -1,190 +1,186 @@
 "use client";
-import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { authAPI } from "../../utils/api";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 export default function Cadastro() {
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     nome: "",
     email: "",
     senha: "",
-    ra: "",
     funcao: "",
+    id_pool: "",
   });
+
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const router = useRouter();
+  const [mensagem, setMensagem] = useState("");
+  const [token, setToken] = useState(null);
+
+  useEffect(() => {
+    const t = localStorage.getItem("token");
+    if (t) setToken(t);
+  }, []);
 
   const handleChange = (e) => {
-    const { id, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [id]: value
-    }));
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
-
-    if (!/^\d{8}$/.test(formData.ra)) {
-      setError("O RA deve conter exatamente 8 números.");
-      return;
-    }
-
     setLoading(true);
+    setMensagem("");
 
     try {
-      const cadastroData = {
-        ...formData,
-        ra: parseInt(formData.ra),
-      };
+      const { nome, email, senha, funcao, id_pool } = form;
 
-      await authAPI.cadastro(cadastroData);
-      setSuccess("Cadastro realizado com sucesso! Redirecionando...");
+      let payload = { nome, email, senha, funcao };
+      let url = "";
 
-      setTimeout(() => {
-        router.push("/login");
-      }, 2000);
+      if (funcao === "tecnico") {
+        // Se for técnico → rota de técnico
+        payload.id_pool = id_pool;
+        url = "http://localhost:3001/usuario/createTechnician";
+      } else {
+        // Se for aluno ou adm → rota normal
+        url = "http://localhost:3001/usuario/cadastro";
+      }
+
+      const response = await axios.post(url, payload, {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+      });
+
+      setMensagem("✅ Usuário cadastrado com sucesso!");
+      setForm({ nome: "", email: "", senha: "", funcao: "", id_pool: "" });
     } catch (error) {
-      setError(error.message || "Erro ao realizar cadastro");
+      console.error("Erro ao cadastrar:", error.response?.data || error.message);
+      setMensagem(
+        "❌ " + (error.response?.data?.mensagem || "Erro ao cadastrar usuário.")
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-xl shadow-lg max-w-sm w-full text-center">
-        <div className="mb-6">
-          <img
-            src="/logo.png"
-            alt="Zelus Assistência Técnica"
-            className="w-44 mx-auto"
-          />
-        </div>
+    <div className="min-h-screen font-sans bg-gray-50 flex items-center justify-center p-6">
+      <div className="w-full max-w-lg bg-white rounded-xl shadow-lg p-8 border border-gray-200">
+        <h2 className="text-2xl font-semibold mb-6 text-gray-800 text-center">
+          Cadastro de Usuário
+        </h2>
 
-        <h2 className="text-2xl font-medium text-gray-800 mb-5">Criar Conta</h2>
-
-        {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
-            {error}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Nome */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nome
+            </label>
+            <input
+              type="text"
+              name="nome"
+              value={form.nome}
+              onChange={handleChange}
+              required
+              placeholder="Digite o nome completo"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-800"
+            />
           </div>
-        )}
 
-        {success && (
-          <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg text-sm">
-            {success}
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              required
+              placeholder="exemplo@gmail.com"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-800"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Aceito apenas: @gmail, @hotmail, @outlook ou @exemplo
+            </p>
           </div>
-        )}
 
-        <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
-          {/* Nome completo */}
-          <label htmlFor="nome" className="sr-only">
-            Nome Completo
-          </label>
-          <input
-            type="text"
-            id="nome"
-            placeholder="Seu nome completo"
-            value={formData.nome}
-            onChange={handleChange}
-            required
-            className="p-3 border border-gray-300 rounded-lg text-sm w-full focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent text-black"
-          />
-
-          {/* E-mail */}
-          <label htmlFor="email" className="sr-only">
-            E-mail
-          </label>
-          <input
-            type="email"
-            id="email"
-            placeholder="exemplo@email.com"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            className="p-3 border border-gray-300 rounded-lg text-sm w-full focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent text-black"
-          />
-
-          {/* RA */}
-          <label htmlFor="ra" className="sr-only">
-            RA
-          </label>
-          
-          <input
-            type="text"
-            id="ra"
-            placeholder="Seu RA (8 dígitos)"
-            value={formData.ra}
-            onChange={(e) => {
-              const value = e.target.value.replace(/\D/g, "");
-              if (value.length <= 8) {
-                setFormData({ ...formData, ra: value });
-              }
-            }}
-            required
-            maxLength={8}
-            className="p-3 border border-gray-300 rounded-lg text-sm w-full focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent text-black"
-          />
           {/* Senha */}
-          <label htmlFor="senha" className="sr-only">
-            Senha
-          </label>
-          <input
-            type="password"
-            id="senha"
-            placeholder="Crie uma senha (6-8 caracteres)"
-            value={formData.senha}
-            onChange={handleChange}
-            required
-            minLength={6}
-            maxLength={8}
-            className="p-3 border border-gray-300 rounded-lg text-sm w-full focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent text-black"
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Senha
+            </label>
+            <input
+              type="password"
+              name="senha"
+              value={form.senha}
+              onChange={handleChange}
+              required
+              placeholder="6 a 8 caracteres com pelo menos 1 número"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-800"
+            />
+          </div>
 
           {/* Função */}
-          <label htmlFor="funcao" className="sr-only">
-            Função
-          </label>
-          <select
-            id="funcao"
-            value={formData.funcao}
-            onChange={handleChange}
-            required
-            className="p-3 border border-gray-300 rounded-lg text-sm w-full focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent text-black"
-          >
-            <option value="">Selecione sua função</option>
-            <option value="aluno">Aluno</option>
-            <option value="tecnico">Técnico</option>
-            <option value="gerente">Gerente</option>
-          </select>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Função
+            </label>
+            <select
+              name="funcao"
+              value={form.funcao}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-800"
+            >
+              <option value="">Selecione</option>
+              <option value="aluno">Aluno</option>
+              <option value="tecnico">Técnico</option>
+              <option value="administrador">Administrador</option>
+            </select>
+          </div>
 
-          {/* Botão de cadastro */}
+          {/* id_pool só aparece se for técnico */}
+          {form.funcao === "tecnico" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Área do Técnico
+              </label>
+              <select
+                name="id_pool"
+                value={form.id_pool}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-800"
+              >
+                <option value="">Selecione a área</option>
+                <option value="1">Manutenção</option>
+                <option value="2">Externo</option>
+                <option value="3">Apoio Técnico</option>
+                <option value="4">Limpeza</option>
+              </select>
+            </div>
+          )}
+
+          {/* Botão */}
           <button
             type="submit"
             disabled={loading}
-            className="p-3 bg-[#084438] text-white border-none rounded-lg text-base cursor-pointer hover:bg-green-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-green-900 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition disabled:opacity-60"
           >
             {loading ? "Cadastrando..." : "Cadastrar"}
           </button>
-
-          <div className="mt-5 text-sm text-gray-600 tracking-tight">
-            Já tem uma conta?
-          </div>
-
-          <Link href="/login">
-            <button
-              type="button"
-              className="p-3 bg-gray-50 border border-gray-300 rounded-lg text-sm cursor-pointer text-gray-600 hover:bg-gray-100 transition-colors w-full"
-            >
-              Entrar
-            </button>
-          </Link>
         </form>
+
+        {mensagem && (
+          <p
+            className={`mt-4 text-center font-medium ${
+              mensagem.includes("sucesso") ? "text-green-700" : "text-red-600"
+            }`}
+          >
+            {mensagem}
+          </p>
+        )}
       </div>
     </div>
   );

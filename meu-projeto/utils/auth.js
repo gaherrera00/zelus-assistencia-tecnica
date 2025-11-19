@@ -10,6 +10,22 @@ export function verifyToken(token) {
   }
 }
 
+export const isAdmin = () => {
+  if (typeof window !== "undefined") {
+    const user = localStorage.getItem("user");
+    if (!user) return false;
+
+    try {
+      const parsedUser = JSON.parse(user);
+      return parsedUser.funcao === "administrador"; 
+    } catch (e) {
+      return false;
+    }
+  }
+  return false;
+};
+
+
 export function getTokenFromHeader(authHeader) {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;

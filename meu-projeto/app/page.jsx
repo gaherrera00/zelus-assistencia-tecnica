@@ -1,7 +1,7 @@
 import Link from "next/link";
 export default function Home() {
   return (
-    <main className="bg-secondary text-black">
+    <main className="bg-secondary text-black -m-4 lg:-m-6">
       {/* HERO */}
       <section className="relative min-h-screen flex items-center ">
         {/* Vídeo de fundo */}
@@ -93,15 +93,15 @@ export default function Home() {
           <h2 className="text-2xl md:text-3xl font-bold mb-4">
             ASSISTÊNCIA TÉCNICA{" "}
             <span className="text-primary">ESPECIALISTA</span> EM{" "}
-            <span className="text-primary">COMPUTADORES</span>
+            <span className="text-primary">MANUTENÇÃO</span>
           </h2>
           <p className="mb-6">
-            Cansado(a) de ter seu computador quebrado e perder tempo e dinheiro
-            para consertá-lo? Nós resolvemos rápido e com garantia.
+            Cansado(a) de ter seu equipamento quebrado e não saber concerta-lo?
+            Nós resolvemos rápido e com garantia.
           </p>
-          <button className="bg-primary text-black px-6 py-3 rounded-md font-bold">
-            SOLICITE SEU ORÇAMENTO
-          </button>
+          <button className="w-100 bg-gradient-to-r from-[#084438] to-green-700 p-3 rounded-md font-bold text-white">
+                SOLICITE SEU CHAMADO
+              </button>
         </div>
       </section>
 

@@ -4,12 +4,10 @@ const app = express();
 import cors from 'cors';
 const port = process.env.PORT || 3001;
 
-import authRotas from './routes/authRotas.js';
 import chamadoRotas from './routes/chamadoRotas.js';
-import poolRotas from './routes/poolRotas.js';
 import apontamentoRotas from './routes/apontamentoRotas.js';
-import patrimonioRotas from './routes/patrimonioRotas.js';
 import usuarioRotas from './routes/usuarioRotas.js';
+import authMiddleware from './middlewares/authMiddleware.js';
 
 app.use(cors());
 app.use(express.json());
@@ -18,11 +16,8 @@ app.get('/', (req, res) => {
   res.status(201).send('<h1> API de Chamados.</h1>')
 });
 
-app.use('/auth', authRotas);
-app.use('/chamado', chamadoRotas);
-app.use('/pool', poolRotas);
-app.use('/apontamento', apontamentoRotas);
-app.use('/patrimonio', patrimonioRotas);
+app.use('/chamado',authMiddleware, chamadoRotas);
+app.use('/apontamento',authMiddleware, apontamentoRotas);
 app.use('/usuario', usuarioRotas)
 
 app.options('/', (req, res) => {

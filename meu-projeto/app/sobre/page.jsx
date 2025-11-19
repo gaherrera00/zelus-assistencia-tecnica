@@ -60,7 +60,7 @@ export default function SobreNos() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white -m-4 lg:-m-6">
       {/* Hero Section */}
       <section className="relative pt-20 pb-16 bg-gradient-to-r from-[#084438] to-green-700 text-white overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-20"></div>

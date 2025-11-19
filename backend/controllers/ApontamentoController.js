@@ -1,9 +1,8 @@
-import { listarApontamentos, obterApontamentoPorId, criarApontamento, excluirApontamento } from '../models/apontamentos.js';
-import { read } from '../config/database.js';
+import { listarApontamentos, obterApontamentoPorId, criarApontamento } from '../models/apontamentos.js';
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 
-const listarApontamentosController = async (req, res) => {
+export const listarApontamentosController = async (req, res) => {
     try {
         const apontamentos = await listarApontamentos();
         res.status(200).json(apontamentos);
@@ -13,7 +12,7 @@ const listarApontamentosController = async (req, res) => {
     }
 };
 
-const obterApontamentoPorIdController = async (req, res) => {
+export const obterApontamentoPorIdController = async (req, res) => {
     try {
         const id = req.params.id;
         const apontamentos = await obterApontamentoPorId(id);
@@ -24,91 +23,52 @@ const obterApontamentoPorIdController = async (req, res) => {
     }
 };
 
-const criarApontamentoController = async (req, res) => {
+export const criarApontamentoController = async (req, res) => {
     try {
-        const { id_chamado, id_tecnico, descricao, comeco, fim, duracao, criado_em } = req.body;
-
-        const verificarChamado = await read('chamados', `id_chamado = '${id_chamado}'`);
-        if (!verificarChamado || verificarChamado.length === 0) {
-            return res.status(400).json({ mensagem: "Chamado inexistente." });
-        }
-
-        const verificarTec = await read('pool_tecnico', `id_tecnico = '${id_tecnico}'`);
-        if (id_tecnico != verificarTec) {
-            return res.status(400).json({ mensagem: "id do tecnico inexistente." });
-        }
-
-        if (!descricao || typeof descricao !== "string" || descricao.trim().length < 3) {
-            return res.status(400).json({ mensagem: "Descrição é obrigatória e deve ter pelo menos 3 caracteres." });
-        }
-
-        if (!comeco || isNaN(Date.parse(comeco))) {
-            return res.status(400).json({ mensagem: "Data de início (comeco) inválida." });
-        }
-
-        if (!fim || isNaN(Date.parse(fim))) {
-            return res.status(400).json({ mensagem: "Data de fim (fim) inválida." });
-        }
-
-        if (new Date(fim) <= new Date(comeco)) {
-            return res.status(400).json({ mensagem: "A data de fim deve ser posterior à data de início." });
-        }
-
-        if (!duracao || typeof duracao !== "number" || duracao <= 0) {
-            return res.status(400).json({ mensagem: "Duração deve ser um número maior que 0." });
-        }
-
-        if (criado_em && isNaN(Date.parse(criado_em))) {
-            return res.status(400).json({ mensagem: "Data de criação inválida." });
-        }
+        const { descricao } = req.body;
+        const id_chamado = req.params.id_chamado;
+        const id_tecnico = req.user.id;
 
         const apontamentoData = {
             id_chamado: id_chamado,
             id_tecnico: id_tecnico,
-            descricao: descricao,
-            comeco: comeco,
-            fim: fim,
-            duracao: duracao,
-            criado_em: criado_em
+            descricao: descricao
         }
 
-        const apontamentoId = await criarPatrimonio(apontamentoData);
-        
-        // Agora cria o PDF com base no patrimônio recém-criado
-        const apontamento = await obterPatrimonioPorId(apontamentoId);  // Recupera o patrimônio recém-criado
+        const apontamentoId = await criarApontamento(apontamentoData);
+        res.status(201).json({ mensagem: "Apontamento criado com sucesso.", apontamentoId });
 
-        // Cria o documento PDF
-        const doc = new PDFDocument();
+    //     const apontamentoId = await criarApontamento(apontamentoData);
 
-        // Configuração do PDF
-        doc.fontSize(18).text('Relatório de Apontamento de Chamada', { align: 'center' });
-        doc.fontSize(14).text(`Tipo de item: ${patrimonio.tipo_item}`);
-        doc.text(`Sala: ${patrimonio.sala}`);
-        doc.text(`Data de Aquisição: ${patrimonio.data_aquisicao || 'Não informada'}`);
-        doc.text(`Observações: ${patrimonio.observacoes || 'Sem observações'}`);
-        
-        // Envia o PDF como resposta ao cliente
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'attachment; filename=apontamento.pdf');
-        doc.pipe(res); // O arquivo PDF será enviado como resposta
-        doc.end(); // Finaliza o PDF
-        
-        res.status(201).json({ mensagem: 'Apontamento criado com sucesso.', apontamento});
+    // // 5) Recupera o apontamento recém-criado
+    // const apontamento = await obterApontamentoPorId(apontamentoId);
+
+    // // 6) Gera o PDF com os dados do apontamento
+    // const doc = new PDFDocument({ margin: 30 });
+
+    // // Configura headers para download
+    // res.setHeader('Content-Type', 'application/pdf');
+    // res.setHeader('Content-Disposition', `attachment; filename=apontamento_${apontamentoId}.pdf`);
+
+    // doc.pipe(res);
+
+    // doc.fontSize(18).text('Relatório de Apontamento', { align: 'center' });
+    // doc.moveDown();
+
+    // doc.fontSize(14).text(`ID do Apontamento: ${apontamento.id_apontamentos}`);
+    // doc.text(`ID do Chamado: ${apontamento.id_chamado}`);
+    // doc.text(`ID do Técnico: ${apontamento.id_tecnico}`);
+    // doc.moveDown(0.5);
+
+    // doc.fontSize(14).text(`Descrição: ${apontamento.descricao}`);
+    // doc.text(`Início: ${apontamento.comeco}`);
+    // doc.text(`Fim: ${apontamento.fim}`);
+    // if (apontamento.duracao) doc.text(`Duração (s): ${apontamento.duracao}`);
+    // if (apontamento.criado_em) doc.text(`Criado em: ${apontamento.criado_em}`);
+
+    // doc.end();
     } catch (err) {
         console.error('Erro ao criar apontamentos: ', err);
         res.status(500).json({ mensagem: 'Erro ao criar apontamentos.' });
     }
 };
-
-const excluirApontamentoController = async (req, res) => {
-    try {
-        const apontamentoId = req.params.id;
-        await excluirApontamento(apontamentoId);
-        res.status(200).json({ mensagem: 'Apontamento excluido com sucesso.' });
-    } catch (err) {
-        console.error('Erro ao excluir apontamento: ', err);
-        res.status(500).json({ mensagem: 'Erro ao excluir apontamento.' });
-    }
-}
-
-export { listarApontamentosController, obterApontamentoPorIdController, criarApontamentoController, excluirApontamentoController };

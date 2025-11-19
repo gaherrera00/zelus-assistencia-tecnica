@@ -1,6 +1,7 @@
-import { readAll, read, create, update, deleteRecord } from '../config/database.js';
+import { readAll, read, create, deleteRecord } from '../config/database.js';
+import { generateHashedPassword } from '../uteis/hashPassword.js';
 
-const listarUsuarios = async () => {
+export const listarUsuarios = async () => {
   try {
     return await readAll('usuarios');
   } catch (error) {
@@ -9,7 +10,7 @@ const listarUsuarios = async () => {
   }
 };
 
-const obterUsuarioPorId = async (id) => {
+export const obterUsuarioPorId = async (id) => {
   try {
     return await read('usuarios', `id_usuario = ${id}`);
   } catch (error) {
@@ -18,7 +19,20 @@ const obterUsuarioPorId = async (id) => {
   }
 };
 
-const excluirUsuario = async (id) => {
+export const criarUsuario = async (usuarioData) => {
+  try {
+        const hashedPassword = await generateHashedPassword(usuarioData.senha);
+        const data = { ...usuarioData, senha: hashedPassword };
+        usuarioData = data;
+    return await create('usuarios', data);
+  }
+  catch (error) {
+    console.error('Erro ao criar usuario:', error);
+    throw error;
+  }
+};
+
+export const excluirUsuario = async (id) => {
   try {
     await deleteRecord('usuarios', `id_usuario = ${id}`);
   } catch (error) {
@@ -27,4 +41,32 @@ const excluirUsuario = async (id) => {
   }
 };
 
-export { listarUsuarios, obterUsuarioPorId, excluirUsuario };
+// Criar técnico vinculado a um pool
+export async function createTechnician(data, id_pool) {
+  try {
+    data.senha = await generateHashedPassword(data.senha);
+
+    // Cria o usuário
+    const tecnicoId = await create('usuarios', {
+      nome: data.nome,
+      email: data.email,
+      senha: data.senha,
+      funcao: data.funcao
+    });
+    // Só cria a relação se id_pool existir
+    let relacaoTecId = null;
+    if (id_pool != null) {
+      relacaoTecId = await create('pool_tecnico', { 
+        id_pool, 
+        id_tecnico: tecnicoId
+      });
+    } else {
+      console.warn("id_pool não fornecido, relação pool_tecnico não criada.");
+    }
+
+    return { tecnicoId, relacaoTecId };
+  } catch (err) {
+    console.error('createTechnician error:', err);
+    throw err;
+  }
+}

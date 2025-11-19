@@ -1,93 +1,69 @@
-CREATE DATABASE zelos;
-use zelos;
-DROP DATABASE zelos;
-
--- Criação da tabela `usuarios`
-CREATE TABLE usuarios (
+CREATE DATABASE IF NOT EXISTS zelos; USE zelos; drop database zelos;
+ -- ========================= -- Tabela usuarios -- =========================
+CREATE TABLE usuarios ( 
     id_usuario INT AUTO_INCREMENT PRIMARY KEY,
-    nome VARCHAR(255) NOT NULL,
-    senha VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    ra VARCHAR(20) NOT NULL UNIQUE,
-    funcao VARCHAR(100) NOT NULL,
-    status ENUM('ativo', 'inativo') DEFAULT 'ativo',
-    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+    nome VARCHAR(255) NOT NULL, 
+    senha VARCHAR(255) NOT NULL, 
+    email VARCHAR(255) NOT NULL UNIQUE, 
+    funcao VARCHAR(100) NOT NULL, 
+    status ENUM('ativo', 'inativo') DEFAULT 'ativo', 
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP 
+); 
 
-INSERT INTO usuarios (nome, senha, email, funcao)
-VALUES ('Seu Nome', 'sua_senha', 'seu.email@exemplo.com', 'admin');
+-- ========================= -- Tabela pool -- ========================= 
+CREATE TABLE pool ( 
+    id_pool INT AUTO_INCREMENT PRIMARY KEY, 
+    titulo ENUM('externo', 'manutencao', 'apoio_tecnico', 'limpeza') NOT NULL, 
+    descricao TEXT, status ENUM('ativo', 'inativo') DEFAULT 'ativo', 
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP, atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
+    created_by INT, 
+    updated_by INT, 
+    FOREIGN KEY (created_by) REFERENCES usuarios(id_usuario) ON DELETE CASCADE, 
+    FOREIGN KEY (updated_by) REFERENCES usuarios(id_usuario) ON DELETE CASCADE 
+); 
 
--- Criação da tabela `pool`
-CREATE TABLE pool (
-    id_pool INT AUTO_INCREMENT PRIMARY KEY,
-    titulo ENUM('externo', 'manutencao', 'apoio_tecnico', 'limpeza') NOT NULL,
-    descricao TEXT,
-    status ENUM('ativo', 'inativo') DEFAULT 'ativo',
-    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    created_by INT,
-    updated_by INT,
-    FOREIGN KEY (created_by) REFERENCES usuarios(id_usuario),
-    FOREIGN KEY (updated_by) REFERENCES usuarios(id_usuario)
-);
+-- Inserindo pools iniciais 
+INSERT INTO pool (titulo, descricao) 
+VALUES 
+('externo', 'Pool de chamados para problemas de conectividade, acesso a sistemas de terceiros ou serviços externos, como internet.'), 
+('manutencao', 'Pool de chamados para tarefas de manutenção preventiva ou corretiva de hardware e software, como troca de peças ou atualização de sistemas.'), 
+('apoio_tecnico', 'Pool de chamados para solicitações de suporte técnico geral, incluindo dúvidas sobre o uso de softwares, configuração de e-mail e outros pequenos ajustes.'), 
+('limpeza', 'Pool de chamados para solicitações de limpeza e organização de equipamentos de TI, como computadores, impressoras e servidores.'); 
 
-    -- Criação da tabela `pool_tecnico`
-CREATE TABLE pool_tecnico (
-	id INT AUTO_INCREMENT PRIMARY KEY,
-	id_pool INT,
-	id_tecnico INT,
-	FOREIGN KEY (id_pool) REFERENCES pool(id_pool),
-	FOREIGN KEY (id_tecnico) REFERENCES usuarios(id_usuario)
-);
+-- ========================= -- Tabela pool_tecnico -- ========================= 
+CREATE TABLE pool_tecnico ( 
+    id INT AUTO_INCREMENT PRIMARY KEY, 
+    id_pool INT, id_tecnico INT, 
+    FOREIGN KEY (id_pool) REFERENCES pool(id_pool) ON DELETE CASCADE, 
+    FOREIGN KEY (id_tecnico) REFERENCES usuarios(id_usuario) ON DELETE CASCADE 
+); 
 
--- Criação da tabela `chamados`
-CREATE TABLE chamados (
-    id_chamado INT AUTO_INCREMENT PRIMARY KEY,
-    
-    -- Dados do usuário
-    nome VARCHAR(255) NOT NULL,
-    sala VARCHAR(250) NOT NULL,
-    ra VARCHAR(20) NOT NULL,
-    turma VARCHAR(50) NOT NULL,
-    
-    -- Dados do chamado
-    patrimonios_id INT NOT NULL,
-    sintoma VARCHAR(255) NOT NULL,
-    detalhes TEXT,
-    inicio TIMESTAMP NOT NULL,
-    frequencia VARCHAR(100),
-    historico TEXT,
-    
-    -- Controle de status
-    status ENUM('pendente', 'em andamento', 'concluído') DEFAULT 'pendente',
-    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (patrimonios_id) REFERENCES patrimonios(id_patrimonio),
-    FOREIGN KEY (ra) REFERENCES usuarios(ra)
-);
+-- ========================= -- Tabela chamados -- ========================= 
+CREATE TABLE chamados ( 
+    id_chamado INT AUTO_INCREMENT PRIMARY KEY, 
+    nome VARCHAR(255) NOT NULL, detalhes TEXT, 
+    comeco TIMESTAMP NOT NULL DEFAULT NOW(), 
+    fim TIMESTAMP NULL, 
+    duracao INT AS (TIMESTAMPDIFF(SECOND, comeco, fim)) STORED, 
+    status ENUM('pendente', 'em andamento', 'concluído') DEFAULT 'pendente', 
+    id_pool INT NOT NULL, 
+    criado_por INT NOT NULL, 
+    id_tecnico INT NULL, 
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
+    FOREIGN KEY (id_pool) REFERENCES pool(id_pool) ON DELETE CASCADE, 
+    FOREIGN KEY (criado_por) REFERENCES usuarios(id_usuario) ON DELETE CASCADE, 
+    FOREIGN KEY (id_tecnico) REFERENCES usuarios(id_usuario) ON DELETE SET NULL 
+); 
 
-CREATE TABLE patrimonios (
-    id_patrimonio INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    tipo_item ENUM('Computador', 'Mesa', 'Cadeira', 'Impressora', 'Projetor', 'Outros') NOT NULL,
-    sala VARCHAR(250) NOT NULL,
-    status ENUM('disponível', 'em uso', 'em manutenção') DEFAULT 'disponível',
-    data_aquisicao DATE,
-    observacoes TEXT,
-    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
-CREATE TABLE apontamentos (
-    id_apontamentos INT AUTO_INCREMENT PRIMARY KEY,
-    chamado_id INT NOT NULL,
-    tecnico_id INT NOT NULL,
-    descricao TEXT,
-    comeco TIMESTAMP NOT NULL,
-    fim TIMESTAMP NULL,
-    duracao INT AS (TIMESTAMPDIFF(SECOND, comeco, fim)) STORED,
-    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (chamado_id) REFERENCES chamados(id_chamado),
-    FOREIGN KEY (tecnico_id) REFERENCES usuarios(id_usuario)
+-- ========================= -- Tabela apontamentos -- ========================= 
+CREATE TABLE apontamentos ( 
+    id_apontamentos INT AUTO_INCREMENT PRIMARY KEY, 
+    id_chamado INT NOT NULL, 
+    id_tecnico INT NOT NULL, 
+    descricao TEXT, 
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+    FOREIGN KEY (id_chamado) REFERENCES chamados(id_chamado) ON DELETE CASCADE,
+    FOREIGN KEY (id_tecnico) REFERENCES usuarios(id_usuario) ON DELETE CASCADE 
 );
